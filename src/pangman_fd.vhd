@@ -182,8 +182,8 @@ begin
 
   timer_2_seg : contador_m
   generic map(
-    -- M => 1e8, -- 2 s
-    M => 1e4, -- 200 us para simulacao
+    M => 1e8, -- 2 s
+    -- M => 1e4, -- 200 us para simulacao (TEST_ONLY)
     N => 27
   )
   port map(
