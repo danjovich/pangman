@@ -7,7 +7,6 @@ dist : pangman.zip
 pangman.zip : $(ALL_SOURCES) $(TEST_FILES)
 	zip -rj $@ $(ALL_SOURCES) $(TEST_FILES)
 
-
 clean :
 	rm pangman.zip
-	rm dist/*
+	rm dist/*.vhd
