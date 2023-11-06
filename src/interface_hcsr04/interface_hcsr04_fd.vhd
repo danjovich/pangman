@@ -74,7 +74,8 @@ begin
 
   gerador_trigger : gerador_pulso
   generic map(
-    largura => 1
+    -- largura => 500
+    largura => 1 -- para testes
   )
   port map(
     clock  => clock,

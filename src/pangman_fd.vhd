@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
--- Arquivo   : sonar_fd.vhd
+-- Arquivo   : pangman_fd.vhd
 -- Projeto   : Experiencia 5 - Sistema de Sonar
 -----------------------------------------------------------------------
 -- Descricao : fluxo de dados do sistema de sonar da experiência 5
@@ -15,7 +15,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 
-entity sonar_fd is
+entity pangman_fd is
   port (
     clock              : in std_logic;
     echo               : in std_logic;
@@ -25,6 +25,12 @@ entity sonar_fd is
     conta_transmissoes : in std_logic;
     conta_posicao      : in std_logic;
     zera_2_seg         : in std_logic;
+    dado_serial        : in std_logic;
+    zera_1_seg         : in std_logic;
+    zera_servo         : in std_logic;
+    fim_servo          : out std_logic;
+    fim_1_seg          : out std_logic;
+    modo               : out std_logic;
     fim_2_seg          : out std_logic;
     fim_medida         : out std_logic;
     fim_transmissao    : out std_logic;
@@ -40,9 +46,9 @@ entity sonar_fd is
     db_estado_sensor   : out std_logic_vector(3 downto 0);
     db_estado_tx       : out std_logic_vector(3 downto 0)
   );
-end entity sonar_fd;
+end entity pangman_fd;
 
-architecture fd of sonar_fd is
+architecture fd of pangman_fd is
   component controle_servo_3 is
     port (
       clock      : in std_logic;
@@ -140,19 +146,44 @@ architecture fd of sonar_fd is
     );
   end component;
 
-  signal s_trigger                                     : std_logic;
+  component rx_serial_7O1 is
+    port (
+      clock             : in std_logic;
+      reset             : in std_logic;
+      dado_serial       : in std_logic;
+      dado_recebido     : out std_logic_vector(6 downto 0);
+      tem_dado          : out std_logic;
+      paridade_recebida : out std_logic;
+      pronto            : out std_logic;
+      db_dado_serial    : out std_logic;
+      db_estado         : out std_logic_vector(3 downto 0)
+    );
+  end component;
+
+  signal s_trigger, s_pronto                           : std_logic;
   signal s_angulo                                      : std_logic_vector(23 downto 0);
   signal s_distancia                                   : std_logic_vector(11 downto 0);
-  signal s_dados_ascii                                 : std_logic_vector(6 downto 0);
+  signal s_dados_ascii, s_comando                      : std_logic_vector(6 downto 0);
   signal s_centena_ang, s_dezena_ang, s_unidade_ang    : std_logic_vector(6 downto 0);
   signal s_centena_dist, s_dezena_dist, s_unidade_dist : std_logic_vector(6 downto 0);
   signal s_sel, s_posicao                              : std_logic_vector(2 downto 0);
 begin
 
+  process (s_pronto, s_comando, zera)
+  begin
+    if zera = '1' then
+      modo <= '0';
+    elsif s_pronto = '1' and s_comando = "1101001" then
+      modo <= '1';
+    elsif s_pronto = '1' and s_comando = "1110010" then
+      modo <= '0';
+    end if;
+  end process;
+
   timer_2_seg : contador_m
   generic map(
-    M => 1e8, -- 2 s
-    -- M => 1e4, -- 200 us para simulacao
+    -- M => 1e8, -- 2 s
+    M => 1e4, -- 200 us para simulacao
     N => 27
   )
   port map(
@@ -161,6 +192,21 @@ begin
     conta => '1',
     Q     => open,
     fim   => fim_2_seg,
+    meio  => open
+  );
+
+  timer_1_seg : contador_m
+  generic map(
+    M => 5e7, -- 1 s
+    -- M => 5e3, -- 100 us para simulacao
+    N => 26
+  )
+  port map(
+    clock => clock,
+    zera  => zera_1_seg,
+    conta => '1',
+    Q     => open,
+    fim   => fim_1_seg,
     meio  => open
   );
 
@@ -196,6 +242,19 @@ begin
     db_estado       => db_estado_tx
   );
 
+  recebe_dados : rx_serial_7O1
+  port map(
+    clock             => clock,
+    reset             => zera,
+    dado_serial       => dado_serial,
+    dado_recebido     => s_comando,
+    tem_dado          => open,
+    paridade_recebida => open,
+    pronto            => s_pronto,
+    db_dado_serial    => open,
+    db_estado         => open
+  );
+
   controle_servo : controle_servo_3
   port map(
     clock      => clock,
@@ -214,11 +273,11 @@ begin
   port map(
     clock   => clock,
     zera_as => zera,
-    zera_s  => zera,
+    zera_s  => zera_servo,
     conta   => conta_posicao,
     Q       => s_posicao,
     inicio  => open,
-    fim     => open,
+    fim     => fim_servo,
     meio    => open
   );
 

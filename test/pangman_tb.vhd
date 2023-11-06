@@ -1,8 +1,8 @@
 --------------------------------------------------------------------
--- Arquivo   : sonar_tb.vhd
--- Projeto   : Experiencia 5 - Sistema de Sonar
+-- Arquivo   : pangman_tb.vhd
+-- Projeto   : pangman
 --------------------------------------------------------------------
--- Descricao : testbench BÁSICO para circuito do sistema de sonar
+-- Descricao : testbench BÁSICO para circuito do pangman
 --
 --             1) array de casos de teste contém valores de  
 --                largura de pulso de echo do sensor
@@ -19,18 +19,19 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity sonar_tb is
+entity pangman_tb is
 end entity;
 
-architecture tb of sonar_tb is
+architecture tb of pangman_tb is
 
   -- Componente a ser testado (Device Under Test -- DUT)
-  component sonar
+  component pangman is
     port (
       clock            : in std_logic;
       reset            : in std_logic;
       ligar            : in std_logic;
       echo             : in std_logic;
+      dado_serial      : in std_logic;
       trigger          : out std_logic;
       pwm              : out std_logic;
       saida_serial     : out std_logic;
@@ -39,6 +40,7 @@ architecture tb of sonar_tb is
       db_pwm           : out std_logic;
       db_trigger       : out std_logic;
       db_echo          : out std_logic;
+      db_modo          : out std_logic;
       db_posicao       : out std_logic_vector(2 downto 0);
       db_estado        : out std_logic_vector(6 downto 0);
       db_estado_sensor : out std_logic_vector(6 downto 0);
@@ -52,11 +54,13 @@ architecture tb of sonar_tb is
   signal reset_in         : std_logic                     := '0';
   signal ligar_in         : std_logic                     := '0';
   signal echo_in          : std_logic                     := '0';
+  signal dado_serial_in   : std_logic                     := '0';
   signal trigger_out      : std_logic                     := '0';
-  signal pwm_out          : std_logic                     := '0';
-  signal saida_serial_out : std_logic                     := '1';
   signal fim_posicao_out  : std_logic                     := '0';
+  signal saida_serial_out : std_logic                     := '1';
+  signal pwm_out          : std_logic                     := '0';
   signal db_estado_out    : std_logic_vector (6 downto 0) := "0000000";
+
   -- Configurações do clock
   constant clockPeriod   : time      := 20 ns; -- clock de 50MHz
   signal keep_simulating : std_logic := '0';   -- delimita o tempo de geração do clock
@@ -91,12 +95,13 @@ begin
   clock_in <= (not clock_in) and keep_simulating after clockPeriod/2;
 
   -- Conecta DUT (Device Under Test)
-  dut : sonar
+  dut : pangman
   port map(
     clock            => clock_in,
     reset            => reset_in,
     ligar            => ligar_in,
     echo             => echo_in,
+    dado_serial      => dado_serial_in,
     trigger          => trigger_out,
     pwm              => pwm_out,
     saida_serial     => saida_serial_out,
@@ -129,7 +134,7 @@ begin
     reset_in <= '0';
     wait until falling_edge(clock_in);
 
-    ---- ligar sonar ----------------
+    ---- ligar pangman ----------------
     wait for 20 us;
     ligar_in <= '1';
 
@@ -154,7 +159,7 @@ begin
       wait for larguraPulso;
       echo_in <= '0';
 
-      -- 5) espera sinal fim (indica final da medida de uma posicao do sonar)
+      -- 5) espera sinal fim (indica final da medida de uma posicao do pangman)
       wait until fim_posicao_out = '1';
     end loop;
 

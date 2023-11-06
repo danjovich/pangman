@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Arquivo   : sonar_uc.vhd
+-- Arquivo   : pangman_uc.vhd
 -- Projeto   : Experiencia 5 - Sistema de Sonar
 ------------------------------------------------------------------------
 -- Descricao : unidade de controle do sistema de sonar da experiência 5
@@ -13,42 +13,50 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity sonar_uc is
+entity pangman_uc is
   port (
     reset              : in std_logic;
     clock              : in std_logic;
     ligar              : in std_logic;
-    fim_2_seg          : in std_logic;
+    mudar_servo        : in std_logic;
+    fim_servo          : in std_logic;
+    fim_1_seg          : in std_logic;
     fim_medida         : in std_logic;
     fim_transmissao    : in std_logic;
     fim_transmissoes   : in std_logic;
+    modo               : in std_logic;
+    zera_1_seg         : out std_logic;
     zera               : out std_logic;
     zera_2_seg         : out std_logic;
+    zera_servo         : out std_logic;
     mensurar           : out std_logic;
     transmite          : out std_logic;
     conta_transmissoes : out std_logic;
     conta_posicao      : out std_logic;
     db_estado          : out std_logic_vector(3 downto 0)
   );
-end entity sonar_uc;
+end entity pangman_uc;
 
-architecture uc of sonar_uc is
+architecture uc of pangman_uc is
   type tipo_estado is (
     inicial,
     preparacao,
+    volta,
     aguarda,
+    mudar_posicao,
+    interrupcao,
     medida,
+    espera_medida,
     transmissao,
     espera_transmissao,
     proxima_transmissao,
-    mudar_posicao,
     final
   );
   signal Eatual, Eprox : tipo_estado;
 begin
 
   -- estado
-  process (reset, clock)
+  process (ligar, reset, clock)
   begin
     if reset = '1' or ligar = '0' then
       Eatual <= inicial;
@@ -58,7 +66,7 @@ begin
   end process;
 
   -- logica de proximo estado
-  process (ligar, fim_2_seg, fim_medida, fim_transmissao, Eatual)
+  process (ligar, mudar_servo, fim_servo, fim_1_seg, fim_medida, fim_transmissao, Eatual, modo, fim_transmissoes)
   begin
     case Eatual is
       when inicial =>
@@ -70,18 +78,39 @@ begin
 
       when preparacao => Eprox <= aguarda;
 
+      when volta => Eprox <= mudar_posicao;
+
+      when mudar_posicao => Eprox <= aguarda;
+
       when aguarda =>
-        if fim_2_seg = '1' then
+        if modo = '1' then
+          Eprox <= interrupcao;
+        elsif mudar_servo = '1' then
+          Eprox <= mudar_posicao;
+        elsif fim_servo = '1' then
           Eprox <= medida;
         else
           Eprox <= aguarda;
         end if;
 
-      when medida =>
-        if fim_medida = '1' then
+      when interrupcao =>
+        if modo = '0' then
+          Eprox <= medida;
+        else
+          Eprox <= interrupcao;
+        end if;
+
+      when medida => Eprox <= espera_medida;
+
+      when espera_medida =>
+        if modo = '1' then
+          Eprox <= interrupcao;
+        elsif fim_1_seg = '1' then
+          Eprox <= medida;
+        elsif fim_medida = '1' then
           Eprox <= transmissao;
         else
-          Eprox <= medida;
+          Eprox <= espera_medida;
         end if;
 
       when transmissao => Eprox <= espera_transmissao;
@@ -96,16 +125,13 @@ begin
       when proxima_transmissao =>
         if ligar = '1' then
           if fim_transmissoes = '1' then
-            Eprox <= mudar_posicao;
+            Eprox <= volta;
           else
             Eprox <= transmissao;
           end if;
         else
           Eprox <= final;
         end if;
-
-      when mudar_posicao => Eprox <= aguarda;
-
       when final => Eprox <= inicial;
 
       when others => Eprox <= inicial;
@@ -114,12 +140,15 @@ begin
 
   -- saidas de controle
   with Eatual select
-    --      zera <= '1' when inicial | preparacao, '0' when others;
     zera <= '1' when preparacao, '0' when others;
+  with Eatual select
+    zera_servo <= '1' when volta | preparacao, '0' when others;
   with Eatual select
     zera_2_seg <= '1' when preparacao, '0' when others;
   with Eatual select
     mensurar <= '1' when medida, '0' when others;
+  with Eatual select
+    zera_1_seg <= '1' when medida, '0' when others;
   with Eatual select
     transmite <= '1' when transmissao, '0' when others;
   with Eatual select
@@ -131,11 +160,15 @@ begin
     db_estado <=
     "0000" when inicial,
     "0001" when preparacao,
-    "0010" when aguarda,
-    "0011" when medida,
-    "0100" when transmissao,
-    "0101" when espera_transmissao,
-    "0110" when mudar_posicao,
+    "0010" when volta,
+    "0011" when aguarda,
+    "0100" when mudar_posicao,
+    "0101" when interrupcao,
+    "0110" when medida,
+    "0111" when espera_medida,
+    "1000" when transmissao,
+    "1001" when espera_transmissao,
+    "1010" when proxima_transmissao,
     "1111" when final,
     "1110" when others;
 
