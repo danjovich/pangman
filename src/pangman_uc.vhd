@@ -41,7 +41,6 @@ architecture uc of pangman_uc is
   type tipo_estado is (
     inicial,
     preparacao,
-    volta,
     aguarda,
     mudar_posicao,
     interrupcao,
@@ -56,9 +55,9 @@ architecture uc of pangman_uc is
 begin
 
   -- estado
-  process (ligar, reset, clock)
+  process (reset, clock)
   begin
-    if reset = '1' or ligar = '0' then
+    if reset = '1' then
       Eatual <= inicial;
     elsif clock'event and clock = '1' then
       Eatual <= Eprox;
@@ -77,8 +76,6 @@ begin
         end if;
 
       when preparacao => Eprox <= aguarda;
-
-      when volta => Eprox <= mudar_posicao;
 
       when mudar_posicao => Eprox <= aguarda;
 
@@ -125,7 +122,7 @@ begin
       when proxima_transmissao =>
         if ligar = '1' then
           if fim_transmissoes = '1' then
-            Eprox <= volta;
+            Eprox <= mudar_posicao;
           else
             Eprox <= transmissao;
           end if;
@@ -142,7 +139,7 @@ begin
   with Eatual select
     zera <= '1' when preparacao, '0' when others;
   with Eatual select
-    zera_servo <= '1' when volta | preparacao, '0' when others;
+    zera_servo <= '1' when inicial, '0' when others;
   with Eatual select
     zera_2_seg <= '1' when preparacao, '0' when others;
   with Eatual select
@@ -160,15 +157,14 @@ begin
     db_estado <=
     "0000" when inicial,
     "0001" when preparacao,
-    "0010" when volta,
-    "0011" when aguarda,
-    "0100" when mudar_posicao,
-    "0101" when interrupcao,
-    "0110" when medida,
-    "0111" when espera_medida,
-    "1000" when transmissao,
-    "1001" when espera_transmissao,
-    "1010" when proxima_transmissao,
+    "0010" when aguarda,
+    "0011" when mudar_posicao,
+    "0100" when interrupcao,
+    "0101" when medida,
+    "0110" when espera_medida,
+    "0111" when transmissao,
+    "1000" when espera_transmissao,
+    "1001" when proxima_transmissao,
     "1111" when final,
     "1110" when others;
 
