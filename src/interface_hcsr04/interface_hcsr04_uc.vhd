@@ -48,7 +48,7 @@ begin
     end process;
 
     -- logica de proximo estado
-    process (medir, echo, fim_medida, Eatual) 
+    process (medir, echo, fim_medida, Eatual, clock) 
     begin
       case Eatual is
         when inicial =>         if medir='1' then Eprox <= preparacao;
