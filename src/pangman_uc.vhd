@@ -21,10 +21,12 @@ entity pangman_uc is
     mudar_servo        : in std_logic;
     fim_servo          : in std_logic;
     fim_1_seg          : in std_logic;
+    fim_2_seg          : in std_logic;
     fim_medida         : in std_logic;
     fim_transmissao    : in std_logic;
     fim_transmissoes   : in std_logic;
     modo               : in std_logic;
+    conta_1_seg         : out std_logic;
     zera_1_seg         : out std_logic;
     zera               : out std_logic;
     zera_2_seg         : out std_logic;
@@ -65,7 +67,7 @@ begin
   end process;
 
   -- logica de proximo estado
-  process (ligar, mudar_servo, fim_servo, fim_1_seg, fim_medida, fim_transmissao, Eatual, modo, fim_transmissoes)
+  process (ligar, mudar_servo, fim_servo, fim_1_seg, fim_2_seg, fim_medida, fim_transmissao, Eatual, modo, fim_transmissoes, clock)
   begin
     case Eatual is
       when inicial =>
@@ -75,16 +77,18 @@ begin
           Eprox <= inicial;
         end if;
 
-      when preparacao => Eprox <= aguarda;
+      when preparacao => Eprox <= mudar_posicao;
 
       when mudar_posicao => Eprox <= aguarda;
 
       when aguarda =>
         if modo = '1' then
           Eprox <= interrupcao;
-        elsif mudar_servo = '1' then
-          Eprox <= mudar_posicao;
-        elsif fim_servo = '1' then
+      --   elsif mudar_servo = '1' then
+      --     Eprox <= mudar_posicao;
+      --   elsif fim_servo = '1' then
+      --     Eprox <= medida;
+        elsif fim_2_seg = '1' then
           Eprox <= medida;
         else
           Eprox <= aguarda;
@@ -146,6 +150,8 @@ begin
     mensurar <= '1' when medida, '0' when others;
   with Eatual select
     zera_1_seg <= '1' when medida, '0' when others;
+  with Eatual select
+    conta_1_seg <= '1' when espera_medida, '0' when others;
   with Eatual select
     transmite <= '1' when transmissao, '0' when others;
   with Eatual select

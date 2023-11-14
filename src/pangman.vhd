@@ -33,8 +33,9 @@ entity pangman is
     db_posicao       : out std_logic_vector(2 downto 0);
     db_estado        : out std_logic_vector(6 downto 0);
     db_estado_sensor : out std_logic_vector(6 downto 0);
-    db_estado_tx     : out std_logic_vector(6 downto 0)
-  );
+    db_estado_tx     : out std_logic_vector(6 downto 0);
+    db_timeout : out std_logic
+    );
 end entity pangman;
 
 architecture arch of pangman is
@@ -50,6 +51,7 @@ architecture arch of pangman is
       zera_2_seg         : in std_logic;
       dado_serial        : in std_logic;
       zera_1_seg         : in std_logic;
+      conta_1_seg         : in std_logic;
       zera_servo         : in std_logic;
       fim_servo          : out std_logic;
       fim_1_seg          : out std_logic;
@@ -79,10 +81,12 @@ architecture arch of pangman is
       mudar_servo        : in std_logic;
       fim_servo          : in std_logic;
       fim_1_seg          : in std_logic;
+      fim_2_seg          : in std_logic;
       fim_medida         : in std_logic;
       fim_transmissao    : in std_logic;
       fim_transmissoes   : in std_logic;
       modo               : in std_logic;
+      conta_1_seg         : out std_logic;
       zera_1_seg         : out std_logic;
       zera               : out std_logic;
       zera_2_seg         : out std_logic;
@@ -102,7 +106,7 @@ architecture arch of pangman is
     );
   end component;
 
-  signal s_zera, s_medir, s_transmite, s_conta_transmissoes, s_conta_posicao, s_zera_2_seg, s_fim_2_seg, s_fim_medida, s_fim_transmissao, s_fim_transmissoes, s_modo, s_fim_1_seg, s_zera_1_seg, s_fim_servo, s_zera_servo : std_logic;
+  signal s_zera, s_medir, s_transmite, s_conta_transmissoes, s_conta_posicao, s_zera_2_seg, s_fim_2_seg, s_fim_medida, s_fim_transmissao, s_fim_transmissoes, s_modo, s_fim_1_seg, s_zera_1_seg, s_fim_servo, s_zera_servo, s_conta_1_seg : std_logic;
   signal s_db_estado, s_db_estado_sensor, s_db_estado_tx                                                                                                                                                                   : std_logic_vector(3 downto 0);
 begin
 
@@ -120,6 +124,7 @@ begin
     modo               => s_modo,
     zera_servo         => s_zera_servo,
     fim_servo          => s_fim_servo,
+    conta_1_seg => s_conta_1_seg,
     fim_1_seg          => s_fim_1_seg,
     zera_1_seg         => s_zera_1_seg,
     fim_2_seg          => s_fim_2_seg,
@@ -149,7 +154,9 @@ begin
     fim_transmissao    => s_fim_transmissao,
     fim_transmissoes   => s_fim_transmissoes,
     zera_1_seg         => s_zera_1_seg,
+    conta_1_seg => s_conta_1_seg,
     fim_1_seg          => s_fim_1_seg,
+    fim_2_seg          => s_fim_2_seg,
     modo               => s_modo,
     zera               => s_zera,
     zera_2_seg         => s_zera_2_seg,
@@ -182,5 +189,6 @@ begin
   );
 
   db_modo <= s_modo;
+  db_timeout <= s_fim_1_seg;
 
 end architecture arch;
