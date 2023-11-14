@@ -27,8 +27,7 @@ entity pangman_fd is
     zera_2_seg         : in std_logic;
     dado_serial        : in std_logic;
     zera_1_seg         : in std_logic;
-    conta_1_seg         : in std_logic;
-    zera_servo         : in std_logic;
+    conta_1_seg        : in std_logic;
     fim_servo          : out std_logic;
     fim_1_seg          : out std_logic;
     modo               : out std_logic;
@@ -183,9 +182,9 @@ begin
 
   timer_2_seg : contador_m
   generic map(
---    M => 1e8, -- 2 s
-	 M => 250e5, -- 0,5 s
-  --  M => 1e4, -- 200 us para simulacao (TEST_ONLY)
+    --    M => 1e8, -- 2 s
+    M => 250e5, -- 0,5 s
+    --  M => 1e4, -- 200 us para simulacao (TEST_ONLY)
     N => 27
   )
   port map(
