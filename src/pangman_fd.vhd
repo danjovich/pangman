@@ -27,7 +27,8 @@ entity pangman_fd is
     zera_2_seg         : in std_logic;
     dado_serial        : in std_logic;
     zera_1_seg         : in std_logic;
-    conta_1_seg        : in std_logic;
+    conta_1_seg         : in std_logic;
+    zera_servo         : in std_logic;
     fim_servo          : out std_logic;
     fim_1_seg          : out std_logic;
     modo               : out std_logic;
@@ -37,14 +38,15 @@ entity pangman_fd is
     fim_transmissoes   : out std_logic;
     trigger            : out std_logic;
     saida_serial       : out std_logic;
-    pwm                : out std_logic;
+    pwm_hor                : out std_logic;
+    pwm_ver                : out std_logic;
     db_saida_serial    : out std_logic;
-    db_pwm             : out std_logic;
     db_trigger         : out std_logic;
     db_echo            : out std_logic;
     db_posicao         : out std_logic_vector(2 downto 0);
     db_estado_sensor   : out std_logic_vector(3 downto 0);
-    db_estado_tx       : out std_logic_vector(3 downto 0)
+    db_estado_tx       : out std_logic_vector(3 downto 0);
+    db_comando : out std_logic_vector(1 downto 0)
   );
 end entity pangman_fd;
 
@@ -166,25 +168,44 @@ architecture fd of pangman_fd is
   signal s_dados_ascii, s_comando                      : std_logic_vector(6 downto 0);
   signal s_centena_ang, s_dezena_ang, s_unidade_ang    : std_logic_vector(6 downto 0);
   signal s_centena_dist, s_dezena_dist, s_unidade_dist : std_logic_vector(6 downto 0);
-  signal s_sel, s_posicao                              : std_logic_vector(2 downto 0);
+  signal s_sel, s_posicao_hor_rom, s_posicao_ver                              : std_logic_vector(2 downto 0);
+  signal  s_posicao_hor                               : std_logic_vector(1 downto 0);
 begin
 
   process (s_pronto, s_comando, zera)
   begin
     if zera = '1' then
       modo <= '0';
-    elsif s_pronto = '1' and s_comando = "1101001" then
+    elsif s_pronto = '1' and s_comando = "1101001" then -- i
       modo <= '1';
-    elsif s_pronto = '1' and s_comando = "1110010" then
+    elsif s_pronto = '1' and s_comando = "1110010" then -- r
       modo <= '0';
+    end if;
+
+    if s_comando = "0110000" then -- 0
+      s_posicao_ver <= "000";
+    elsif s_comando = "0110001" then -- 1
+      s_posicao_ver <= "001";
+    elsif s_comando = "0110010" then -- 2
+      s_posicao_ver <= "010";
+    elsif s_comando = "0110011" then -- 3
+      s_posicao_ver <= "011";
+    elsif s_comando = "1100111" then -- g
+      modo <= '1';
+    elsif s_comando = "1110000" then -- p
+      modo <= '1';
+    -- else 
+    --   s_posicao_ver <= "010";
     end if;
   end process;
 
+  db_comando <= s_comando(1 downto 0);
+
   timer_2_seg : contador_m
   generic map(
-    --    M => 1e8, -- 2 s
-    M => 250e5, -- 0,5 s
-    --  M => 1e4, -- 200 us para simulacao (TEST_ONLY)
+--    M => 1e8, -- 2 s
+	 M => 250e5, -- 0,5 s
+  --  M => 1e4, -- 200 us para simulacao (TEST_ONLY)
     N => 27
   )
   port map(
@@ -198,7 +219,8 @@ begin
 
   timer_1_seg : contador_m
   generic map(
-    M => 5e7, -- 1 s
+    -- M => 5e7, -- 1 s
+    M => 1e8, -- 2 s
     -- M => 5e3, -- 100 us para simulacao
     N => 26
   )
@@ -256,35 +278,49 @@ begin
     db_estado         => open
   );
 
-  controle_servo : controle_servo_3
+  controle_servo_hor : controle_servo_3
   port map(
     clock      => clock,
     reset      => zera,
-    posicao    => s_posicao,
-    pwm        => pwm,
+    posicao    => s_posicao_hor_rom,
+    pwm        => pwm_hor,
     db_reset   => open,
-    db_pwm     => db_pwm,
+    db_pwm     => open,
     db_posicao => db_posicao
+  );
+
+  controle_servo_ver : controle_servo_3
+  port map(
+    clock      => clock,
+    reset      => zera,
+    posicao    => s_posicao_ver,
+    pwm        => pwm_ver,
+    db_reset   => open,
+    db_pwm     => open,
+    db_posicao => open
   );
 
   contadorg_posicao_ang : contadorg_updown_m
   generic map(
-    M => 8
+    -- M => 8
+    M => 4
   )
   port map(
     clock   => clock,
     zera_as => zera,
     zera_s  => zera,
     conta   => conta_posicao,
-    Q       => s_posicao,
+    Q       => s_posicao_hor,
     inicio  => open,
     fim     => fim_servo,
     meio    => open
   );
 
+  s_posicao_hor_rom <= '0' & s_posicao_hor;
+
   angulos : rom_angulos_8x24
   port map(
-    endereco => s_posicao,
+    endereco => s_posicao_hor_rom,
     saida    => s_angulo
   );
 

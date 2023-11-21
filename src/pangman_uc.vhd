@@ -26,10 +26,11 @@ entity pangman_uc is
     fim_transmissao    : in std_logic;
     fim_transmissoes   : in std_logic;
     modo               : in std_logic;
-    conta_1_seg        : out std_logic;
+    conta_1_seg         : out std_logic;
     zera_1_seg         : out std_logic;
     zera               : out std_logic;
     zera_2_seg         : out std_logic;
+    zera_servo         : out std_logic;
     mensurar           : out std_logic;
     transmite          : out std_logic;
     conta_transmissoes : out std_logic;
@@ -83,10 +84,10 @@ begin
       when aguarda =>
         if modo = '1' then
           Eprox <= interrupcao;
-          --   elsif mudar_servo = '1' then
-          --     Eprox <= mudar_posicao;
-          --   elsif fim_servo = '1' then
-          --     Eprox <= medida;
+      --   elsif mudar_servo = '1' then
+      --     Eprox <= mudar_posicao;
+      --   elsif fim_servo = '1' then
+      --     Eprox <= medida;
         elsif fim_2_seg = '1' then
           Eprox <= medida;
         else
@@ -106,7 +107,7 @@ begin
         if modo = '1' then
           Eprox <= interrupcao;
         elsif fim_1_seg = '1' then
-          Eprox <= medida;
+          Eprox <= aguarda;
         elsif fim_medida = '1' then
           Eprox <= transmissao;
         else
@@ -141,6 +142,8 @@ begin
   -- saidas de controle
   with Eatual select
     zera <= '1' when preparacao, '0' when others;
+  with Eatual select
+    zera_servo <= '1' when inicial, '0' when others;
   with Eatual select
     zera_2_seg <= '1' when preparacao, '0' when others;
   with Eatual select
