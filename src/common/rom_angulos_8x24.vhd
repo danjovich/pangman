@@ -29,14 +29,19 @@ end entity;
 architecture rom_arch of rom_angulos_8x24 is
     type memoria_8x24 is array (integer range 0 to 7) of std_logic_vector(23 downto 0);
     constant tabela_angulos: memoria_8x24 := (
-        x"303230", --  0 = 020  -- conteudo da ROM
+        -- x"303230", --  0 = 020  -- conteudo da ROM
         x"303430", --  1 = 040  -- angulos para o sonar
-        x"303630", --  2 = 060  -- (valores em hexadecimal)
+        -- x"303630", --  2 = 060  -- (valores em hexadecimal)
         x"303830", --  3 = 080
-        x"313030", --  4 = 100
+        -- x"313030", --  4 = 100
         x"313230", --  5 = 120
-        x"313430", --  6 = 140
-        x"313630"  --  7 = 160
+        -- x"313430", --  6 = 140
+        x"313630",  --  7 = 160
+        -- 0s
+        x"000000",
+        x"000000",
+        x"000000",
+        x"000000"
     );
 begin
 
