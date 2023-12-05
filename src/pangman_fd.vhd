@@ -219,8 +219,8 @@ begin
 
   timer_1_seg : contador_m
   generic map(
-    -- M => 5e7, -- 1 s
-    M => 1e8, -- 2 s
+    M => 5e7, -- 1 s
+    -- M => 1e8, -- 2 s
     -- M => 5e3, -- 100 us para simulacao
     N => 26
   )

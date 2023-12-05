@@ -107,7 +107,8 @@ begin
         if modo = '1' then
           Eprox <= interrupcao;
         elsif fim_1_seg = '1' then
-          Eprox <= aguarda;
+          -- Eprox <= aguarda;
+          Eprox <= preparacao;
         elsif fim_medida = '1' then
           Eprox <= transmissao;
         else
